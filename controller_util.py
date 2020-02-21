@@ -1,22 +1,6 @@
-#!/usr/bin/python3
-import argparse
-import serial
 from pynput import keyboard
-from time import sleep
-import time
 import math
-import os
 
-# keep in track of keys that are currently held
-current = set()
-
-record_mode = False
-
-operation_list = []
-
-ser = serial.Serial('COM3', 38400)
-
-# Actual Switch DPAD Values
 A_DPAD_CENTER = 0x08
 A_DPAD_U = 0x00
 A_DPAD_U_R = 0x01
@@ -112,7 +96,6 @@ key_mappings = {
     'i': BTN_B,
     'o': BTN_A,
     'l': BTN_X,
-    'r': BTN_R,
     keyboard.Key.enter: BTN_HOME,
     keyboard.Key.space: BTN_L,
     keyboard.Key.up: RSTICK_U,
@@ -185,74 +168,3 @@ def decrypt_dpad(dpad):
     else:
         dpadDecrypt = A_DPAD_CENTER
     return dpadDecrypt
-
-
-last_time = time.time()
-last_cmd = "0 0 8 128 128 128 128"
-
-
-def on_press(key):
-    global last_time, last_cmd
-
-    f = open("operation_list.txt", "a+")
-    try:
-        key_ = key.char
-    except AttributeError:
-        key_ = key
-    if key_ in key_mappings:
-        current.add(key_)
-        cur_cmd = cmd_to_packet(current2cmd())
-        if last_cmd != cur_cmd and record_mode:
-            now = time.time()
-            duration = now - last_time
-            last_time = now
-            cur_operation = {"cmd": last_cmd, "duration": duration}
-            operation_list.append(cur_operation)
-            last_cmd = cur_cmd
-            f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
-                    str(cur_operation['duration']) + '\n')
-            print(cur_operation)
-            f.close()
-
-
-def on_release(key):
-    global last_time, last_cmd
-
-    f = open("operation_list.txt", "a+")
-    try:
-        key_ = key.char
-    except AttributeError:
-        key_ = key
-    if key_ in key_mappings:
-        current.remove(key_)
-        cur_cmd = cmd_to_packet(current2cmd())
-        if last_cmd != cur_cmd and record_mode:
-            now = time.time()
-            duration = now - last_time
-            last_time = now
-            cur_operation = {"cmd": last_cmd, "duration": duration}
-            operation_list.append(cur_operation)
-            last_cmd = cur_cmd
-            f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
-                    str(cur_operation['duration']) + '\n')
-            print(cur_operation)
-            f.close()
-    if key == keyboard.Key.esc:
-        return False
-
-
-def current2cmd():
-    cmd = 0
-    for key_ in current:
-        cmd += key_mappings[key_]
-    return cmd
-
-
-listener = keyboard.Listener(on_press=on_press, on_release=on_release)
-listener.start()
-
-while (True):
-    time.sleep(0.008)
-    msg = cmd_to_packet(current2cmd())
-    print(msg)
-    ser.write(f'{msg}\r\n'.encode('utf-8'))
