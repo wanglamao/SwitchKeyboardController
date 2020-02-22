@@ -1,5 +1,10 @@
 from pynput import keyboard
+from tkinter import *
 import math
+import serial
+import json
+import time
+import threading
 
 A_DPAD_CENTER = 0x08
 A_DPAD_U = 0x00
@@ -88,6 +93,8 @@ NO_INPUT = BTN_NONE + DPAD_CENTER + LSTICK_CENTER + RSTICK_CENTER
 #     keyboard.Key.right: RSTICK_R
 # }
 
+import json
+
 key_mappings = {
     'w': DPAD_U,
     'a': DPAD_L,
@@ -103,6 +110,10 @@ key_mappings = {
     keyboard.Key.left: RSTICK_L,
     keyboard.Key.right: RSTICK_R
 }
+
+# data = json.dumps(key_mappings)
+# with open('key_mappings.json', 'w') as f:
+#     json.dump(data, f)
 
 
 # Compute x and y based on angle and intensity
@@ -168,3 +179,105 @@ def decrypt_dpad(dpad):
     else:
         dpadDecrypt = A_DPAD_CENTER
     return dpadDecrypt
+
+
+class Controller(threading.Thread):
+    def __init__(self, record_mode=False):
+        threading.Thread.__init__(self)
+        self.threadID = "Controller"
+        self.current_pressed_key = set()
+        self.record_mode = record_mode
+        self.key_mappings = self.read_key_mappings()
+        self.set_keyboard_listener()
+        self.last_time = time.time()
+        self.operation_list = []
+        self.last_cmd = ''
+
+    def read_key_mappings(self):
+        key_mappings = {
+            'w': DPAD_U,
+            'a': DPAD_L,
+            's': DPAD_D,
+            'd': DPAD_R,
+            'i': BTN_B,
+            'o': BTN_A,
+            'l': BTN_X,
+            keyboard.Key.enter: BTN_HOME,
+            keyboard.Key.space: BTN_L,
+            keyboard.Key.up: RSTICK_U,
+            keyboard.Key.down: RSTICK_D,
+            keyboard.Key.left: RSTICK_L,
+            keyboard.Key.right: RSTICK_R
+        }
+        return key_mappings
+
+    def set_keyboard_listener(self):
+        print("running")
+        listener = keyboard.Listener(on_press=self.on_press,
+                                     on_release=self.on_release)
+        listener.start()
+
+    def on_press(self, key):
+        try:
+            key_ = key.char
+        except AttributeError:
+            key_ = key
+        if key_ in key_mappings:
+            self.current_pressed_key.add(key_)
+            cur_cmd = cmd_to_packet(self.current2cmd())
+            if self.last_cmd != cur_cmd and self.record_mode:
+
+                f = open("operation_list.txt", "a+")
+                now = time.time()
+                duration = now - self.last_time
+                self.last_time = now
+                cur_operation = {"cmd": self.last_cmd, "duration": duration}
+                self.operation_list.append(cur_operation)
+                self.last_cmd = cur_cmd
+                f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
+                        str(cur_operation['duration']) + '\n')
+                print(cur_operation)
+                f.close()
+
+    def on_release(self, key):
+
+        try:
+            key_ = key.char
+        except AttributeError:
+            key_ = key
+        if key_ in key_mappings:
+            self.current_pressed_key.remove(key_)
+            cur_cmd = cmd_to_packet(self.current2cmd())
+            if self.last_cmd != cur_cmd and self.record_mode:
+
+                f = open("operation_list.txt", "a+")
+                now = time.time()
+                duration = now - self.last_time
+                self.last_time = now
+                cur_operation = {"cmd": self.last_cmd, "duration": duration}
+                self.operation_list.append(cur_operation)
+                self.last_cmd = cur_cmd
+                f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
+                        str(cur_operation['duration']) + '\n')
+                print(cur_operation)
+                f.close()
+        if key == keyboard.Key.esc:
+            return False
+
+    def current2cmd(self):
+        cmd = 0
+        for key_ in self.current_pressed_key:
+            cmd += self.key_mappings[key_]
+        return cmd
+
+    def set_record_mode(self, record_mode):
+        self.record_mode = record_mode
+
+    def run(self):
+        ser = serial.Serial("COM3", 38400)
+        print("record mode: " + str(self.record_mode))
+        while (True):
+            time.sleep(0.008)
+            msg = cmd_to_packet(self.current2cmd())
+            # print(msg)
+            ser.write(f'{msg}\r\n'.encode('utf-8'))

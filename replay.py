@@ -27,7 +27,7 @@ for line in lines:
 ser = serial.Serial('COM3', 38400)
 
 #free pokemon
-for j in range(6):
+for j in range(14):
     for i in range(5):
         for operation in operations_list:
             msg = operation['cmd']
