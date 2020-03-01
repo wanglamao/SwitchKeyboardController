@@ -198,24 +198,6 @@ class Controller(threading.Thread):
         self.last_cmd = ''
         self.stop = False
 
-    def read_key_mappings(self):
-        key_mappings = {
-            'w': DPAD_U,
-            'a': DPAD_L,
-            's': DPAD_D,
-            'd': DPAD_R,
-            'i': BTN_B,
-            'o': BTN_A,
-            'l': BTN_X,
-            keyboard.Key.enter: BTN_HOME,
-            keyboard.Key.space: BTN_L,
-            keyboard.Key.up: RSTICK_U,
-            keyboard.Key.down: RSTICK_D,
-            keyboard.Key.left: RSTICK_L,
-            keyboard.Key.right: RSTICK_R
-        }
-        return key_mappings
-
     def set_keyboard_listener(self):
         print("running")
         listener = keyboard.Listener(on_press=self.on_press,
@@ -312,18 +294,6 @@ class draw_controller(threading.Thread):
         self.DPAD_D = np.int16(Image.open('./resource/DOWN.tif'))
         self.controller_array = np.int16(
             Image.open('./resource/pro_controller.png'))
-        tmp = np.copy(self.controller_array)
-        tmp2 = np.copy(self.controller_array)
-        tmp[self.X[:, :, 3] == 0] = tmp[self.X[:, :, 3] == 0] * 0.7
-        # print(np.max(abs(tmp - tmp2)))
-        tmp2[:, :, 3] = tmp2[:, :, 3] * 0.7
-
-        # print(np.max(abs(tmp - tmp2)))
-        self.X_pressed = ImageTk.PhotoImage(
-            Image.fromarray(tmp.astype('uint8'), 'RGBA'))
-
-        self.nothing_pressed = ImageTk.PhotoImage(
-            Image.fromarray(tmp2.astype('uint8'), 'RGBA'))
         self.buttons_value_image = {
             BTN_A: self.A,
             BTN_B: self.B,
