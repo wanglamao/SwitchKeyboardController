@@ -2,6 +2,7 @@ import serial
 import time
 from time import sleep
 import re
+from tqdm import tqdm
 from controller_util import *
 
 f = open('free_oneline_pokemon.txt', 'r')
@@ -25,11 +26,15 @@ for line in lines:
     change_box_list.append({'cmd': cmd, 'duration': duration})
 
 ser = serial.Serial('COM3', 38400)
-
+tmplist = []
 #free pokemon
-for j in range(14):
+for j in tqdm(range(5)):
     for i in range(5):
-        for operation in operations_list:
+        if i == 4:
+            tmp_list = operations_list[:-1]
+        else:
+            tmp_list = operations_list
+        for operation in tmp_list:
             msg = operation['cmd']
             ser.write(f'{msg}\r\n'.encode('utf-8'))
             sleep(operation['duration'])

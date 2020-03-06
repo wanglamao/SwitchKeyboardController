@@ -266,13 +266,15 @@ class Controller(threading.Thread):
         self.record_mode = record_mode
 
     def run(self):
-        # ser = serial.Serial("COM3", 38400)
+        ser = serial.Serial("COM3", 38400)
         print("record mode: " + str(self.record_mode))
         while not self.stop:
-            time.sleep(0.008)
+            time.sleep(0.01)
             msg = cmd_to_packet(self.current2cmd())
             # print(msg)
-            # ser.write(f'{msg}\r\n'.encode('utf-8'))
+            ser.write(f'{msg}\r\n'.encode('utf-8'))
+
+        print("exit")
 
 
 class draw_controller(threading.Thread):

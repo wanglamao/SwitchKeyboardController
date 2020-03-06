@@ -36,6 +36,7 @@ class Application(Frame):
 
     def play(self):
         if self.launch_flag:
+            self.launch_flag = False
             self.pad.stop = True
             return
         self.launch_flag = True
@@ -54,6 +55,11 @@ class Application(Frame):
 
 app = Application()
 
-app.master.title('Hello')
 
+def on_closing():
+    app.master.destroy()
+
+
+app.master.title('Hello')
+app.master.protocol("WM_DELETE_WINDOW", on_closing)
 app.mainloop()

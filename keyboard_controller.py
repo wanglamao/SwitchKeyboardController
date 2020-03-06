@@ -201,18 +201,20 @@ def on_press(key):
         key_ = key
     if key_ in key_mappings:
         current.add(key_)
-        cur_cmd = cmd_to_packet(current2cmd())
-        if last_cmd != cur_cmd and record_mode:
-            now = time.time()
-            duration = now - last_time
-            last_time = now
-            cur_operation = {"cmd": last_cmd, "duration": duration}
-            operation_list.append(cur_operation)
-            last_cmd = cur_cmd
-            f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
-                    str(cur_operation['duration']) + '\n')
-            print(cur_operation)
-            f.close()
+        # cur_cmd = cmd_to_packet(current2cmd())
+        # print(cur_cmd)
+        # ser.write(f'{cur_cmd}\r\n'.encode('utf-8'))
+        # if last_cmd != cur_cmd and record_mode:
+        #     now = time.time()
+        #     duration = now - last_time
+        #     last_time = now
+        #     cur_operation = {"cmd": last_cmd, "duration": duration}
+        #     operation_list.append(cur_operation)
+        #     last_cmd = cur_cmd
+        #     f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
+        #             str(cur_operation['duration']) + '\n')
+        #     print(cur_operation)
+        #     f.close()
 
 
 def on_release(key):
@@ -225,18 +227,19 @@ def on_release(key):
         key_ = key
     if key_ in key_mappings:
         current.remove(key_)
-        cur_cmd = cmd_to_packet(current2cmd())
-        if last_cmd != cur_cmd and record_mode:
-            now = time.time()
-            duration = now - last_time
-            last_time = now
-            cur_operation = {"cmd": last_cmd, "duration": duration}
-            operation_list.append(cur_operation)
-            last_cmd = cur_cmd
-            f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
-                    str(cur_operation['duration']) + '\n')
-            print(cur_operation)
-            f.close()
+        # cur_cmd = cmd_to_packet(current2cmd())
+        # ser.write(f'{cur_cmd}\r\n'.encode('utf-8'))
+        # if last_cmd != cur_cmd and record_mode:
+        #     now = time.time()
+        #     duration = now - last_time
+        #     last_time = now
+        #     cur_operation = {"cmd": last_cmd, "duration": duration}
+        #     operation_list.append(cur_operation)
+        #     last_cmd = cur_cmd
+        #     f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
+        #             str(cur_operation['duration']) + '\n')
+        #     print(cur_operation)
+        #     f.close()
     if key == keyboard.Key.esc:
         return False
 
@@ -251,8 +254,12 @@ def current2cmd():
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 listener.start()
 
+# with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+#     listener.join()
+
 while (True):
-    time.sleep(0.008)
+    time.sleep(0.009)
     msg = cmd_to_packet(current2cmd())
     print(msg)
+
     ser.write(f'{msg}\r\n'.encode('utf-8'))
