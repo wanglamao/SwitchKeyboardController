@@ -3,54 +3,69 @@ import time
 from time import sleep
 import re
 from tqdm import tqdm
-from controller_util import *
 
-f = open('free_oneline_pokemon.txt', 'r')
+# from controller_util import *
+
+f = open("lvl_up.txt", "r")
+"""
+    升级
+    初始条件：
+        精灵中心PC前
+        自动同步时间    关闭
+        放一批精灵出去打工
+        菜单图标放在地图上
+
+"""
 lines = f.readlines()
 operations_list = []
 f.close()
 for line in lines:
-    cmd = line[line.find(':') + 1:line.find(',')]
+    cmd = line[line.find(":") + 1 : line.find(",")]
     # print(cmd)
-    duration = float(line[line.find(':', line.find('duration')) + 1:-1])
-    operations_list.append({'cmd': cmd, 'duration': duration})
+    duration = float(line[line.find(":", line.find("duration")) + 1 : -1])
+    operations_list.append({"cmd": cmd, "duration": duration})
 
-f = open('next_box.txt', 'r')
-lines = f.readlines()
-change_box_list = []
-f.close()
-for line in lines:
-    cmd = line[line.find(':') + 1:line.find(',')]
-    # print(cmd)
-    duration = float(line[line.find(':', line.find('duration')) + 1:-1])
-    change_box_list.append({'cmd': cmd, 'duration': duration})
+# f = open('next_box.txt', 'r')
+# lines = f.readlines()
+# change_box_list = []
+# f.close()
+# for line in lines:
+#     cmd = line[line.find(':') + 1:line.find(',')]
+#     # print(cmd)
+#     duration = float(line[line.find(':', line.find('duration')) + 1:-1])
+#     change_box_list.append({'cmd': cmd, 'duration': duration})
 
-ser = serial.Serial('COM3', 38400)
-tmplist = []
-#free pokemon
-for j in tqdm(range(5)):
-    for i in range(5):
-        if i == 4:
-            tmp_list = operations_list[:-1]
-        else:
-            tmp_list = operations_list
-        for operation in tmp_list:
-            msg = operation['cmd']
-            ser.write(f'{msg}\r\n'.encode('utf-8'))
-            sleep(operation['duration'])
-    for operation in change_box_list:
-        msg = operation['cmd']
-        ser.write(f'{msg}\r\n'.encode('utf-8'))
-        sleep(operation['duration'])
-# lvl up
-# try:
-#     while True:
-#         for operation in operations_list:
+ser = serial.Serial("COM3", 38400)
+# tmplist = []
+# #free pokemon
+# for j in tqdm(range(5)):
+#     for i in range(5):
+#         if i == 4:
+#             tmp_list = operations_list[:-1]
+#         else:
+#             tmp_list = operations_list
+#         for operation in tmp_list:
 #             msg = operation['cmd']
 #             ser.write(f'{msg}\r\n'.encode('utf-8'))
 #             sleep(operation['duration'])
-# except KeyboardInterrupt:
-# print("exiting")
+#     for operation in change_box_list:
+#         msg = operation['cmd']
+#         ser.write(f'{msg}\r\n'.encode('utf-8'))
+#         sleep(operation['duration'])
+# lvl up
+try:
+    msg = "0 4 8 128 128 128 128"
+    ser.write(f"{msg}\r\n".encode("utf-8"))
+    sleep(0.1)
+    msg = "0 0 8 128 128 128 128"
+    ser.write(f"{msg}\r\n".encode("utf-8"))
+    while True:
+        for operation in operations_list:
+            msg = operation["cmd"]
+            ser.write(f"{msg}\r\n".encode("utf-8"))
+            sleep(operation["duration"])
+except KeyboardInterrupt:
+    print("exiting")
 # msg = "0 8 8 128 128 128 128"
 # ser.write(f'{msg}\r\n'.encode('utf-8'))
 # sleep(0.12102365493774414)

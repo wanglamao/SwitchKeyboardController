@@ -3,7 +3,7 @@ from tkinter import *
 import math
 import serial
 from PIL import Image, ImageTk
-import json
+import os
 import numpy as np
 import time
 import threading
@@ -78,40 +78,116 @@ RSTICK_D_R = 0x13BFF00000000000  # 315 (13B)
 NO_INPUT = BTN_NONE + DPAD_CENTER + LSTICK_CENTER + RSTICK_CENTER
 
 # key_mappings = {
-#     'w': LSTICK_U,
-#     'a': LSTICK_L,
-#     's': LSTICK_D,
-#     'd': LSTICK_R,
-#     'i': BTN_B,
-#     'o': BTN_A,
-#     'l': BTN_X,
-#     'j': BTN_Y,
-#     'p': BTN_MINUS,
-#     keyboard.Key.enter: BTN_HOME,
-#     keyboard.Key.space: BTN_R,
-#     keyboard.Key.up: RSTICK_U,
-#     keyboard.Key.down: RSTICK_D,
-#     keyboard.Key.left: RSTICK_L,
-#     keyboard.Key.right: RSTICK_R
+# "w": LSTICK_U,
+# "a": LSTICK_L,
+# "s": LSTICK_D,
+# "d": LSTICK_R,
+# "i": BTN_B,
+# "o": BTN_A,
+# "l": BTN_X,
+# "j": BTN_Y,
+# "p": BTN_MINUS,
+# keyboard.Key.enter: BTN_HOME,
+# keyboard.Key.space: BTN_R,
+# keyboard.Key.up: RSTICK_U,
+# keyboard.Key.down: RSTICK_D,
+# keyboard.Key.left: RSTICK_L,
+# keyboard.Key.right: RSTICK_R,
 # }
 
-import json
+
+# binded_keys = set()
+
+# button_str_var_mapping={
+#     "BTN_Y":BTN_Y,
+#     "BTN_B":BTN_B,
+#     "BTN_A":BTN_A,
+#     BTN_X,
+#     BTN_L,
+#     BTN_R,
+#     BTN_ZL,
+#     BTN_ZR,
+#     BTN_MINUS,
+#     BTN_PLUS,
+#     BTN_LCLICK,
+#     BTN_RCLICK,
+#     BTN_HOME,
+#     BTN_CAPTURE,
+#     DPAD_U,
+#     DPAD_R,
+#     DPAD_D,
+#     DPAD_L,
+#     LSTICK_R,  # 0 (000)
+#     LSTICK_U,  # 90 (05A)
+#     LSTICK_L,  # 180 (0B4)
+#     LSTICK_D,  # 270 (10E)
+#     RSTICK_R,  # 0 (000)
+#     RSTICK_U,  # 90 (05A)
+#     RSTICK_L,  # 180 (0B4)
+#     RSTICK_D,
+# }
 
 key_mappings = {
-    'w': DPAD_U,
-    'a': DPAD_L,
-    's': DPAD_D,
-    'd': DPAD_R,
-    'i': BTN_B,
-    'o': BTN_A,
-    'l': BTN_X,
-    keyboard.Key.enter: BTN_HOME,
-    keyboard.Key.space: BTN_L,
-    keyboard.Key.up: RSTICK_U,
-    keyboard.Key.down: RSTICK_D,
-    keyboard.Key.left: RSTICK_L,
-    keyboard.Key.right: RSTICK_R
+    #     # BTN_Y:None,
+    #     # BTN_B:None,
+    #     # BTN_A:None,
+    #     # BTN_X:None,
+    #     # BTN_L:None,
+    #     # BTN_R:None,
+    #     # BTN_ZL:None,
+    #     # BTN_ZR:None,
+    #     # BTN_MINUS:None,
+    #     # BTN_PLUS:None,
+    #     # BTN_LCLICK:None,
+    #     # BTN_RCLICK:None,
+    #     # BTN_HOME:None,
+    #     # BTN_CAPTURE:None,
+    #     # DPAD_U:None,
+    #     # DPAD_R:None,
+    #     # DPAD_D:None,
+    #     # DPAD_L:None,
+    #     # LSTICK_R:None,  # 0 (000)
+    #     # LSTICK_U:None,  # 90 (05A)
+    #     # LSTICK_L:None,  # 180 (0B4)
+    #     # LSTICK_D:None,  # 270 (10E)
+    #     # RSTICK_R:None,  # 0 (000)
+    #     # RSTICK_U:None,  # 90 (05A)
+    #     # RSTICK_L:None,  # 180 (0B4)
+    #     # RSTICK_D:None,  # 270 (10E)
 }
+
+
+buttons = [
+    BTN_Y,
+    BTN_B,
+    BTN_A,
+    BTN_X,
+    BTN_L,
+    BTN_R,
+    BTN_ZL,
+    BTN_ZR,
+    BTN_MINUS,
+    BTN_PLUS,
+    BTN_LCLICK,
+    BTN_RCLICK,
+    BTN_HOME,
+    BTN_CAPTURE,
+    DPAD_U,
+    DPAD_R,
+    DPAD_D,
+    DPAD_L,
+    LSTICK_R,  # 0 (000)
+    LSTICK_U,  # 90 (05A)
+    LSTICK_L,  # 180 (0B4)
+    LSTICK_D,  # 270 (10E)
+    RSTICK_R,  # 0 (000)
+    RSTICK_U,  # 90 (05A)
+    RSTICK_L,  # 180 (0B4)
+    RSTICK_D,  # 270 (10E)
+]
+
+default_key_mappings = "./default_mappings.ini"
+
 
 # data = json.dumps(key_mappings)
 # with open('key_mappings.json', 'w') as f:
@@ -136,25 +212,38 @@ def rstick_angle(angle, intensity):
 
 def cmd_to_packet(command):
     cmdCopy = command
-    low = (cmdCopy & 0xFF)
+    low = cmdCopy & 0xFF
     cmdCopy = cmdCopy >> 8
-    high = (cmdCopy & 0xFF)
+    high = cmdCopy & 0xFF
     cmdCopy = cmdCopy >> 8
-    dpad = (cmdCopy & 0xFF)
+    dpad = cmdCopy & 0xFF
     cmdCopy = cmdCopy >> 8
-    lstick_intensity = (cmdCopy & 0xFF)
+    lstick_intensity = cmdCopy & 0xFF
     cmdCopy = cmdCopy >> 8
-    lstick_angle = (cmdCopy & 0xFFF)
+    lstick_angle = cmdCopy & 0xFFF
     cmdCopy = cmdCopy >> 12
-    rstick_intensity = (cmdCopy & 0xFF)
+    rstick_intensity = cmdCopy & 0xFF
     cmdCopy = cmdCopy >> 8
-    rstick_angle = (cmdCopy & 0xFFF)
+    rstick_angle = cmdCopy & 0xFFF
     dpad = decrypt_dpad(dpad)
     left_x, left_y = angle(lstick_angle, lstick_intensity)
     right_x, right_y = angle(rstick_angle, rstick_intensity)
 
-    msg = str(high)+" "+str(low)+" "+str(dpad)+" "+str(left_x) + \
-        " "+str(left_y)+" "+str(right_x)+" "+str(right_y)
+    msg = (
+        str(high)
+        + " "
+        + str(low)
+        + " "
+        + str(dpad)
+        + " "
+        + str(left_x)
+        + " "
+        + str(left_y)
+        + " "
+        + str(right_x)
+        + " "
+        + str(right_y)
+    )
     return msg
 
 
@@ -183,37 +272,58 @@ def decrypt_dpad(dpad):
     return dpadDecrypt
 
 
-current_pressed_key = set()
-
-
 class Controller(threading.Thread):
-    def __init__(self, record_mode=False):
+    def __init__(self, imLabel, record_mode=False):
         threading.Thread.__init__(self)
         self.threadID = "Controller"
         self.record_mode = record_mode
-        # self.key_mappings = self.read_key_mappings()
-        self.set_keyboard_listener()
+        self.listener = None
         self.last_time = time.time()
         self.operation_list = []
-        self.last_cmd = ''
-        self.stop = False
+        self.last_cmd = ""
+        self.isrunning = True
+        self.current_pressed_key = set()
+        self.key_mappings = self.read_key_mappings(default_key_mappings)
+
+        self.drawer = draw_controller(imLabel, controller=self)
+        self.drawer.name = "Draw Button pressing"
+        # self.drawer.start()
+
+    def read_key_mappings(self, inipath):
+        with open(inipath, "r") as f:
+            key_mappings = {}
+            for line in f:
+                target_button = line.split(" ")[0]
+                user_key = line.split(" ")[-1][:-1]
+                if user_key != "NONE":
+                    key_mappings[user_key] = target_button
+
+        return key_mappings
+
+    def save_mapping_ini(self, filename):
+        path = os.path.join("mapping", filename)
+        with open(path, "w+") as f:
+            for k, v in self.key_mappings.items():
+                f.write("{} {}\n".format(v, k))
 
     def set_keyboard_listener(self):
         print("running")
-        listener = keyboard.Listener(on_press=self.on_press,
-                                     on_release=self.on_release)
-        listener.start()
+        self.listener = keyboard.Listener(
+            on_press=self.on_press, on_release=self.on_release
+        )
+        self.listener.name = "keyboard listener"
+        self.listener.start()
 
     def on_press(self, key):
 
-        global current_pressed_key
+        # current_pressed_key, key_mappings
 
         try:
             key_ = key.char
         except AttributeError:
             key_ = key
-        if key_ in key_mappings:
-            current_pressed_key.add(key_)
+        if key_ in self.key_mappings:
+            self.current_pressed_key.add(key_)
             cur_cmd = cmd_to_packet(self.current2cmd())
             if self.last_cmd != cur_cmd and self.record_mode:
 
@@ -224,21 +334,24 @@ class Controller(threading.Thread):
                 cur_operation = {"cmd": self.last_cmd, "duration": duration}
                 self.operation_list.append(cur_operation)
                 self.last_cmd = cur_cmd
-                f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
-                        str(cur_operation['duration']) + '\n')
+                f.write(
+                    "'cmd':"
+                    + cur_operation["cmd"]
+                    + ", 'duration':"
+                    + str(cur_operation["duration"])
+                    + "\n"
+                )
                 print(cur_operation)
                 f.close()
 
     def on_release(self, key):
 
-        global current_pressed_key
-
         try:
             key_ = key.char
         except AttributeError:
             key_ = key
-        if key_ in key_mappings:
-            current_pressed_key.remove(key_)
+        if key_ in self.key_mappings:
+            self.current_pressed_key.remove(key_)
             cur_cmd = cmd_to_packet(self.current2cmd())
             if self.last_cmd != cur_cmd and self.record_mode:
 
@@ -249,8 +362,13 @@ class Controller(threading.Thread):
                 cur_operation = {"cmd": self.last_cmd, "duration": duration}
                 self.operation_list.append(cur_operation)
                 self.last_cmd = cur_cmd
-                f.write('\'cmd\':' + cur_operation['cmd'] + ', \'duration\':' +
-                        str(cur_operation['duration']) + '\n')
+                f.write(
+                    "'cmd':"
+                    + cur_operation["cmd"]
+                    + ", 'duration':"
+                    + str(cur_operation["duration"])
+                    + "\n"
+                )
                 print(cur_operation)
                 f.close()
         if key == keyboard.Key.esc:
@@ -258,44 +376,50 @@ class Controller(threading.Thread):
 
     def current2cmd(self):
         cmd = 0
-        for key_ in current_pressed_key:
-            cmd += key_mappings[key_]
+        for key_ in self.current_pressed_key:
+            cmd += self.key_mappings[key_]
         return cmd
 
     def set_record_mode(self, record_mode):
         self.record_mode = record_mode
 
     def run(self):
+        self.set_keyboard_listener()
+        self.drawer.start()
         ser = serial.Serial("COM3", 38400)
         print("record mode: " + str(self.record_mode))
-        while not self.stop:
+        while self.isrunning:
             time.sleep(0.01)
             msg = cmd_to_packet(self.current2cmd())
             # print(msg)
-            ser.write(f'{msg}\r\n'.encode('utf-8'))
+            ser.write(f"{msg}\r\n".encode("utf-8"))
 
+        self.listener.stop()
+        self.drawer.isrunning = False
         print("exit")
 
 
 class draw_controller(threading.Thread):
-    def __init__(self, imLabel):
+    def __init__(self, imLabel, controller: Controller):
         threading.Thread.__init__(self)
         self.threadID = "Controller"
+        self.controller = controller
+
         self.imLabel = imLabel
-        self.X = np.int16(Image.open('./resource/X.tif'))
-        self.Y = np.int16(Image.open('./resource/Y.tif'))
-        self.A = np.int16(Image.open('./resource/A.tif'))
-        self.B = np.int16(Image.open('./resource/B.tif'))
-        self.HOME = np.int16(Image.open('./resource/HOME.tif'))
-        self.PLUS = np.int16(Image.open('./resource/PLUS.tif'))
-        self.MINUS = np.int16(Image.open('./resource/MINUS.tif'))
-        self.RIGHT = np.int16(Image.open('./resource/RIGHT.tif'))
-        self.DPAD_L = np.int16(Image.open('./resource/LEFT.tif'))
-        self.DPAD_U = np.int16(Image.open('./resource/UP.tif'))
-        self.DPAD_R = np.int16(Image.open('./resource/RIGHT.tif'))
-        self.DPAD_D = np.int16(Image.open('./resource/DOWN.tif'))
-        self.controller_array = np.int16(
-            Image.open('./resource/pro_controller.png'))
+        self.isrunning = True
+        self.X = np.int16(Image.open("./resource/X.tif"))
+        self.Y = np.int16(Image.open("./resource/Y.tif"))
+        self.A = np.int16(Image.open("./resource/A.tif"))
+        self.B = np.int16(Image.open("./resource/B.tif"))
+        self.HOME = np.int16(Image.open("./resource/HOME.tif"))
+        self.PLUS = np.int16(Image.open("./resource/PLUS.tif"))
+        self.MINUS = np.int16(Image.open("./resource/MINUS.tif"))
+        self.RIGHT = np.int16(Image.open("./resource/RIGHT.tif"))
+        self.DPAD_L = np.int16(Image.open("./resource/LEFT.tif"))
+        self.DPAD_U = np.int16(Image.open("./resource/UP.tif"))
+        self.DPAD_R = np.int16(Image.open("./resource/RIGHT.tif"))
+        self.DPAD_D = np.int16(Image.open("./resource/DOWN.tif"))
+        self.controller_array = np.int16(Image.open("./resource/pro_controller.png"))
         self.buttons_value_image = {
             BTN_A: self.A,
             BTN_B: self.B,
@@ -307,11 +431,11 @@ class draw_controller(threading.Thread):
             DPAD_D: self.DPAD_D,
             DPAD_R: self.DPAD_R,
             DPAD_L: self.DPAD_L,
-            DPAD_U: self.DPAD_U
+            DPAD_U: self.DPAD_U,
         }
 
     def run(self):
-        while True:
+        while self.isrunning:
             # time.sleep(1)
             # print("haha")
             # self.imLabel.configure(image=self.nothing_pressed)
@@ -320,17 +444,19 @@ class draw_controller(threading.Thread):
             # time.sleep(1)
             # self.imLabel.configure(image=self.X_pressed)
             # self.imLabel.image = self.X_pressed
-            img = self.compose_pressed_controller(
-                self.get_pressed_keys_in_list())
+            img = self.compose_pressed_controller(self.get_pressed_keys_in_list())
 
             self.imLabel.configure(image=img)
             self.imLabel.image = img
+        print("drawer exited")
 
     def get_pressed_keys_in_list(self):
-        global current_pressed_key
         res = []
-        for key in current_pressed_key:
-            res.append(self.buttons_value_image[key_mappings[key]])
+        for key in self.controller.current_pressed_key:
+            try:
+                res.append(self.buttons_value_image[self.controller.key_mappings[key]])
+            except Exception:
+                pass
         return res
 
     def compose_pressed_controller(self, pressed_keys):
@@ -342,5 +468,5 @@ class draw_controller(threading.Thread):
         tmp = np.transpose(tmp, (2, 0, 1))
         tmp[3][mask[:, :, 3] == 0] = tmp[3][mask[:, :, 3] == 0] * 0.7
         tmp = np.transpose(tmp, (1, 2, 0))
-        res = ImageTk.PhotoImage(Image.fromarray(tmp.astype('uint8'), 'RGBA'))
+        res = ImageTk.PhotoImage(Image.fromarray(tmp.astype("uint8"), "RGBA"))
         return res
