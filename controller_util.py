@@ -98,34 +98,34 @@ NO_INPUT = BTN_NONE + DPAD_CENTER + LSTICK_CENTER + RSTICK_CENTER
 
 # binded_keys = set()
 
-# button_str_var_mapping={
-#     "BTN_Y":BTN_Y,
-#     "BTN_B":BTN_B,
-#     "BTN_A":BTN_A,
-#     BTN_X,
-#     BTN_L,
-#     BTN_R,
-#     BTN_ZL,
-#     BTN_ZR,
-#     BTN_MINUS,
-#     BTN_PLUS,
-#     BTN_LCLICK,
-#     BTN_RCLICK,
-#     BTN_HOME,
-#     BTN_CAPTURE,
-#     DPAD_U,
-#     DPAD_R,
-#     DPAD_D,
-#     DPAD_L,
-#     LSTICK_R,  # 0 (000)
-#     LSTICK_U,  # 90 (05A)
-#     LSTICK_L,  # 180 (0B4)
-#     LSTICK_D,  # 270 (10E)
-#     RSTICK_R,  # 0 (000)
-#     RSTICK_U,  # 90 (05A)
-#     RSTICK_L,  # 180 (0B4)
-#     RSTICK_D,
-# }
+button_str_var_mapping = {
+    "BTN_Y": BTN_Y,
+    "BTN_B": BTN_B,
+    "BTN_A": BTN_A,
+    "BTN_X": BTN_X,
+    "BTN_L": BTN_L,
+    "BTN_R": BTN_R,
+    "BTN_ZL": BTN_ZL,
+    "BTN_ZR": BTN_ZR,
+    "BTN_MINUS": BTN_MINUS,
+    "BTN_PLUS": BTN_PLUS,
+    "BTN_LCLICK": BTN_LCLICK,
+    "BTN_RCLICK": BTN_RCLICK,
+    "BTN_HOME": BTN_HOME,
+    "BTN_CAPTURE": BTN_CAPTURE,
+    "DPAD_U": DPAD_U,
+    "DPAD_R": DPAD_R,
+    "DPAD_D": DPAD_D,
+    "DPAD_L": DPAD_L,
+    "LSTICK_R": LSTICK_R,  # 0 (000)
+    "LSTICK_U": LSTICK_U,  # 90 (05A)
+    "LSTICK_L": LSTICK_L,  # 180 (0B4)
+    "LSTICK_D": LSTICK_D,  # 270 (10E)
+    "RSTICK_R": RSTICK_R,  # 0 (000)
+    "RSTICK_U": RSTICK_U,  # 90 (05A)
+    "RSTICK_L": RSTICK_L,  # 180 ()# 180 (0B4)
+    "RSTICK_D": RSTICK_D,
+}
 
 key_mappings = {
     #     # BTN_Y:None,
@@ -375,9 +375,10 @@ class Controller(threading.Thread):
             return False
 
     def current2cmd(self):
+        global button_str_var_mapping
         cmd = 0
         for key_ in self.current_pressed_key:
-            cmd += self.key_mappings[key_]
+            cmd += button_str_var_mapping[self.key_mappings[key_]]
         return cmd
 
     def set_record_mode(self, record_mode):
@@ -435,6 +436,7 @@ class draw_controller(threading.Thread):
         }
 
     def run(self):
+        print("drawer running")
         while self.isrunning:
             # time.sleep(1)
             # print("haha")

@@ -12,7 +12,7 @@ class Application(Frame):
         # self.drawer = None
         self.launch_flag = False
         self.imLabel = None
-        self.buttonwidth = 2
+        self.buttonwidth = 20
         # self.createWidgets()
 
         self.playButton = Button(
