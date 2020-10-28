@@ -55,6 +55,28 @@ DPAD_D_R = DPAD_D + DPAD_R
 DPAD_U_L = DPAD_U + DPAD_L
 DPAD_D_L = DPAD_D + DPAD_L
 
+
+LSTICK_CENTER = 0x0000000000000000
+LSTICK_U = 0x0000000001000000  # 0 (000)
+LSTICK_R = 0x0000000002000000  # 90 (05A)
+LSTICK_D = 0x0000000004000000  # 180 (0B4)
+LSTICK_L = 0x0000000008000000  # 270 (10E)
+LSTICK_U_L = LSTICK_U + LSTICK_L  # 135 (087)
+LSTICK_U_R = LSTICK_U + LSTICK_R  # 45 (02D)
+LSTICK_D_L = LSTICK_D + LSTICK_L  # 225 (0E1)
+LSTICK_D_R = LSTICK_D + LSTICK_R  # 315 (13B)
+
+RSTICK_CENTER = 0x0000000000000000
+RSTICK_U = 0x0000000100000000  # 0 (000)
+RSTICK_R = 0x0000000200000000  # 90 (05A)
+RSTICK_D = 0x0000000400000000  # 180 (0B4)
+RSTICK_L = 0x0000000800000000  # 270 (10E)
+RSTICK_U_L = RSTICK_U + RSTICK_L  # 135 (087)
+RSTICK_U_R = RSTICK_U + RSTICK_R  # 45 (02D)
+RSTICK_D_L = RSTICK_D + RSTICK_L  # 225 (0E1)
+RSTICK_D_R = RSTICK_D + RSTICK_R  # 315 (13B)
+
+"""
 LSTICK_CENTER = 0x0000000000000000
 LSTICK_R = 0x00000000FF000000  # 0 (000)
 LSTICK_U_R = 0x0000002DFF000000  # 45 (02D)
@@ -74,7 +96,7 @@ RSTICK_L = 0x0B4FF00000000000  # 180 (0B4)
 RSTICK_D_L = 0x0E1FF00000000000  # 225 (0E1)
 RSTICK_D = 0x10EFF00000000000  # 270 (10E)
 RSTICK_D_R = 0x13BFF00000000000  # 315 (13B)
-
+"""
 NO_INPUT = BTN_NONE + DPAD_CENTER + LSTICK_CENTER + RSTICK_CENTER
 
 # key_mappings = {
@@ -218,17 +240,20 @@ def cmd_to_packet(command):
     cmdCopy = cmdCopy >> 8
     dpad = cmdCopy & 0xFF
     cmdCopy = cmdCopy >> 8
-    lstick_intensity = cmdCopy & 0xFF
+    # lstick_intensity = cmdCopy & 0xFF
+    lstick = cmdCopy & 0xFF
     cmdCopy = cmdCopy >> 8
-    lstick_angle = cmdCopy & 0xFFF
-    cmdCopy = cmdCopy >> 12
-    rstick_intensity = cmdCopy & 0xFF
-    cmdCopy = cmdCopy >> 8
-    rstick_angle = cmdCopy & 0xFFF
+    # lstick_angle = cmdCopy & 0xFFF
+    # cmdCopy = cmdCopy >> 12
+    # rstick_intensity = cmdCopy & 0xFF
+    rstick = cmdCopy & 0xFF
+    # cmdCopy = cmdCopy >> 8
+    # rstick_angle = cmdCopy & 0xFFF
     dpad = decrypt_dpad(dpad)
-    left_x, left_y = angle(lstick_angle, lstick_intensity)
-    right_x, right_y = angle(rstick_angle, rstick_intensity)
-
+    # left_x, left_y = angle(lstick_angle, lstick_intensity)
+    # right_x, right_y = angle(rstick_angle, rstick_intensity)
+    left_x, left_y = decrypt_simplified_stick(lstick)
+    right_x, right_y = decrypt_simplified_stick(rstick)
     msg = (
         str(high)
         + " "
@@ -270,6 +295,35 @@ def decrypt_dpad(dpad):
     else:
         dpadDecrypt = A_DPAD_CENTER
     return dpadDecrypt
+
+
+def decrypt_simplified_stick(stick):
+    if stick == DIR_U:
+        return 128, 1
+    elif stick == DIR_R:
+        return 255, 128
+        # dpadDecrypt = A_DPAD_R
+    elif stick == DIR_D:
+        return 128, 255
+        # dpadDecrypt = A_DPAD_D
+    elif stick == DIR_L:
+        return 1, 128
+        # dpadDecrypt = A_DPAD_L
+    elif stick == DIR_U_R:
+        return 218, 37
+        # dpadDecrypt = A_DPAD_U_R
+    elif stick == DIR_U_L:
+        return 37, 37
+        # dpadDecrypt = A_DPAD_U_L
+    elif stick == DIR_D_R:
+        return 218, 218
+        # dpadDecrypt = A_DPAD_D_R
+    elif stick == DIR_D_L:
+        return 37, 218
+        # dpadDecrypt = A_DPAD_D_L
+    else:
+        return 128, 128
+        # dpadDecrypt = A_DPAD_CENTER
 
 
 class Controller(threading.Thread):
@@ -377,25 +431,25 @@ class Controller(threading.Thread):
     def current2cmd(self):
         global button_str_var_mapping
         cmd = 0
-        sticks = [[], []]
+        # sticks = [[], []]
         for key_ in self.current_pressed_key:
-            button_str = self.key_mappings[key_]
-            if "STICK" not in button_str:
-                cmd += button_str_var_mapping[button_str]
-            elif "RSTICK" in button_str:
-                sticks[1].append(button_str)
-            else:
-                sticks[0].append(button_str)
+            cmd += button_str_var_mapping[self.key_mappings[key_]]
+            # if "STICK" not in button_str:
+            #     cmd += button_str_var_mapping[button_str]
+            # elif "RSTICK" in button_str:
+            #     sticks[1].append(button_str)
+            # else:
+            #     sticks[0].append(button_str)
 
-        for stick in sticks:
-            if len(stick) == 0:
-                continue
-            elif len(stick) == 1:
-                cmd += button_str_var_mapping[stick[0]]
-            else:
-                a = [button_str_var_mapping[button] for button in stick]
-                a = int(sum(a) / len(a))
-                cmd += a
+        # for stick in sticks:
+        #     if len(stick) == 0:
+        #         continue
+        #     elif len(stick) == 1:
+        #         cmd += button_str_var_mapping[stick[0]]
+        #     else:
+        #         a = [button_str_var_mapping[button] for button in stick]
+        #         a = int(sum(a) / len(a))
+        #         cmd += a
         return cmd
 
     def set_record_mode(self, record_mode):
@@ -473,7 +527,11 @@ class draw_controller(threading.Thread):
         res = []
         for key in self.controller.current_pressed_key:
             try:
-                res.append(self.buttons_value_image[self.controller.key_mappings[key]])
+                res.append(
+                    self.buttons_value_image[
+                        button_str_var_mapping[self.controller.key_mappings[key]]
+                    ]
+                )
             except Exception:
                 pass
         return res
