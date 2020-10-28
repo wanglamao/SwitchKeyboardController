@@ -377,8 +377,25 @@ class Controller(threading.Thread):
     def current2cmd(self):
         global button_str_var_mapping
         cmd = 0
+        sticks = [[], []]
         for key_ in self.current_pressed_key:
-            cmd += button_str_var_mapping[self.key_mappings[key_]]
+            button_str = self.key_mappings[key_]
+            if "STICK" not in button_str:
+                cmd += button_str_var_mapping[button_str]
+            elif "RSTICK" in button_str:
+                sticks[1].append(button_str)
+            else:
+                sticks[0].append(button_str)
+
+        for stick in sticks:
+            if len(stick) == 0:
+                continue
+            elif len(stick) == 1:
+                cmd += button_str_var_mapping[stick[0]]
+            else:
+                a = [button_str_var_mapping[button] for button in stick]
+                a = int(sum(a) / len(a))
+                cmd += a
         return cmd
 
     def set_record_mode(self, record_mode):
