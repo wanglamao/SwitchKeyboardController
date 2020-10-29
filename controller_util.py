@@ -8,6 +8,8 @@ import numpy as np
 import time
 import threading
 
+# keyboard.KeyCode(13)
+
 A_DPAD_CENTER = 0x08
 A_DPAD_U = 0x00
 A_DPAD_U_R = 0x01
@@ -337,27 +339,56 @@ class Controller(threading.Thread):
         self.last_cmd = ""
         self.isrunning = True
         self.current_pressed_key = set()
-        self.key_mappings = self.read_key_mappings(default_key_mappings)
-
+        self.controller_keyboard = {
+            "BTN_Y": NONE,
+            "BTN_B": NONE,
+            "BTN_A": NONE,
+            "BTN_X": NONE,
+            "BTN_L": NONE,
+            "BTN_R": NONE,
+            "BTN_ZL": NONE,
+            "BTN_ZR": NONE,
+            "BTN_MINUS": NONE,
+            "BTN_PLUS": NONE,
+            "BTN_LCLICK": NONE,
+            "BTN_RCLICK": NONE,
+            "BTN_HOME": NONE,
+            "BTN_CAPTURE": NONE,
+            "DPAD_U": NONE,
+            "DPAD_R": NONE,
+            "DPAD_D": NONE,
+            "DPAD_L": NONE,
+            "LSTICK_R": NONE,  # 0 (000)
+            "LSTICK_U": NONE,  # 90 (05A)
+            "LSTICK_L": NONE,  # 180 (0B4)
+            "LSTICK_D": NONE,  # 270 (10E)
+            "RSTICK_R": NONE,  # 0 (000)
+            "RSTICK_U": NONE,  # 90 (05A)
+            "RSTICK_L": NONE,  # 180 ()# 180 (0B4)
+            "RSTICK_D": NONE,
+        }
+        self.read_key_mappings(default_key_mappings)
+        self.keyboard_controller = {v: k for k, v in self.controller_keyboard.items()}
         self.drawer = draw_controller(imLabel, controller=self)
         self.drawer.name = "Draw Button pressing"
         # self.drawer.start()
 
     def read_key_mappings(self, inipath):
         with open(inipath, "r") as f:
-            key_mappings = {}
+            # self.key_mappings = {}
             for line in f:
                 target_button = line.split(" ")[0]
                 user_key = line.split(" ")[-1][:-1]
                 if user_key != "NONE":
-                    key_mappings[user_key] = target_button
+                    self.controller_keyboard[target_button] = user_key
 
-        return key_mappings
+        self.keyboard_controller = {v: k for k, v in self.controller_keyboard.items()}
+        # return key_mappings
 
     def save_mapping_ini(self, filename):
         path = os.path.join("mapping", filename)
         with open(path, "w+") as f:
-            for k, v in self.key_mappings.items():
+            for k, v in self.controller_keyboard.items():
                 f.write("{} {}\n".format(v, k))
 
     def set_keyboard_listener(self):
@@ -367,6 +398,7 @@ class Controller(threading.Thread):
         )
         self.listener.name = "keyboard listener"
         self.listener.start()
+        # self.listener.join()
 
     def on_press(self, key):
 
@@ -375,9 +407,9 @@ class Controller(threading.Thread):
         try:
             key_ = key.char
         except AttributeError:
-            key_ = key
-        if key_ in self.key_mappings:
-            self.current_pressed_key.add(key_)
+            key_ = key.name
+        if key_ in self.controller_keyboard.values():
+            self.current_pressed_key.add(self.keyboard_controller[key_])
             cur_cmd = cmd_to_packet(self.current2cmd())
             if self.last_cmd != cur_cmd and self.record_mode:
 
@@ -403,9 +435,9 @@ class Controller(threading.Thread):
         try:
             key_ = key.char
         except AttributeError:
-            key_ = key
-        if key_ in self.key_mappings:
-            self.current_pressed_key.remove(key_)
+            key_ = key.name
+        if key_ in self.controller_keyboard.values():
+            self.current_pressed_key.remove(self.keyboard_controller[key_])
             cur_cmd = cmd_to_packet(self.current2cmd())
             if self.last_cmd != cur_cmd and self.record_mode:
 
@@ -433,7 +465,7 @@ class Controller(threading.Thread):
         cmd = 0
         # sticks = [[], []]
         for key_ in self.current_pressed_key:
-            cmd += button_str_var_mapping[self.key_mappings[key_]]
+            cmd += button_str_var_mapping[key_]
             # if "STICK" not in button_str:
             #     cmd += button_str_var_mapping[button_str]
             # elif "RSTICK" in button_str:
@@ -481,8 +513,12 @@ class draw_controller(threading.Thread):
         self.isrunning = True
         self.X = np.int16(Image.open("./resource/X.tif"))
         self.Y = np.int16(Image.open("./resource/Y.tif"))
-        self.A = np.int16(Image.open("./resource/A.tif"))
+        self.A = np.int16(Image.open("./resource/a.png"))
         self.B = np.int16(Image.open("./resource/B.tif"))
+        self.L = np.int16(Image.open("./resource/l.png"))
+        self.ZL = np.int16(Image.open("./resource/zl.png"))
+        self.R = np.int16(Image.open("./resource/r.png"))
+        self.ZR = np.int16(Image.open("./resource/zr.png"))
         self.HOME = np.int16(Image.open("./resource/HOME.tif"))
         self.PLUS = np.int16(Image.open("./resource/PLUS.tif"))
         self.MINUS = np.int16(Image.open("./resource/MINUS.tif"))
@@ -497,6 +533,10 @@ class draw_controller(threading.Thread):
             BTN_B: self.B,
             BTN_X: self.X,
             BTN_Y: self.Y,
+            BTN_L: self.L,
+            BTN_ZL: self.ZL,
+            BTN_R: self.R,
+            BTN_ZR: self.ZR,
             BTN_HOME: self.HOME,
             BTN_PLUS: self.PLUS,
             BTN_MINUS: self.MINUS,
@@ -527,11 +567,7 @@ class draw_controller(threading.Thread):
         res = []
         for key in self.controller.current_pressed_key:
             try:
-                res.append(
-                    self.buttons_value_image[
-                        button_str_var_mapping[self.controller.key_mappings[key]]
-                    ]
-                )
+                res.append(self.buttons_value_image[button_str_var_mapping[key]])
             except Exception:
                 pass
         return res
