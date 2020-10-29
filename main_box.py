@@ -6,6 +6,7 @@ from controller_util import Controller, button_str_var_mapping
 from PIL import Image, ImageTk
 import numpy as np
 from NameChangeableButton import KeyMappingButton
+from mapping import mapping
 
 
 def duplicates(lst, item):
@@ -20,7 +21,6 @@ class Application(Frame):
         self.isOn = False
         self.imLabel = None
         self.buttonwidth = 20
-        # self.createWidgets()
 
         self.playButton = Button(
             self, text="play", command=self.play, width=self.buttonwidth
@@ -48,8 +48,8 @@ class Application(Frame):
         self.imLabel = Label(self, image=controller_pic)
         self.imLabel.image = controller_pic
         self.imLabel.grid(row=1, column=0, columnspan=3)
-
-        self.pad = Controller(self.imLabel, record_mode=False)
+        self.mapping = mapping()
+        self.pad = Controller(self.mapping, self.imLabel, record_mode=False)
 
         # self.draw_button_pressings(self.imLabel)
 
@@ -66,12 +66,11 @@ class Application(Frame):
         # a = self.playButton.bg
         self.playButton.configure(bg="green")
         if self.pad is not None:
-            self.pad = Controller(self.imLabel, record_mode=False)
+            self.pad = Controller(self.mapping, self.imLabel, record_mode=False)
         self.pad.name = "Controller"
         self.pad.start()
 
     def stop(self):
-        # if self.launch_flag:
         self.isOn = False
         self.pad.isrunning = False
 
@@ -84,9 +83,6 @@ class Application(Frame):
             + str(self.pad.record_mode != True)
         )
         self.pad.set_record_mode(self.pad.record_mode != True)
-
-        # print(newkey)
-        # pass
 
     def confirm_setting(self, win, buttons):
         for button in buttons:
@@ -105,11 +101,11 @@ class Application(Frame):
                     buttons[ind].configure(bg="red")
             return
 
-        for index, key in enumerate(self.pad.controller_keyboard.keys()):
-            self.pad.controller_keyboard[key] = buttons[index]["text"]
+        for index, key in enumerate(self.mapping.controller_keyboard.keys()):
+            self.mapping.controller_keyboard[key] = buttons[index]["text"]
 
-        self.pad.keyboard_controller = {
-            v: k for k, v in self.pad.controller_keyboard.items()
+        self.mapping.keyboard_controller = {
+            v: k for k, v in self.mapping.controller_keyboard.items()
         }
         win.destroy()
 
@@ -127,7 +123,7 @@ class Application(Frame):
         setting_frame.pack()
         self.buttons = [None] * 26
         rows = 13
-        for index, items in enumerate(self.pad.controller_keyboard.items()):
+        for index, items in enumerate(self.mapping.controller_keyboard.items()):
             Label(button_frame, text=items[0], width=self.buttonwidth).grid(
                 row=index % rows, column=int(index / rows) * 2
             )

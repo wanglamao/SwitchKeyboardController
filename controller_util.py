@@ -7,6 +7,7 @@ import os
 import numpy as np
 import time
 import threading
+from mapping import mapping
 
 # keyboard.KeyCode(13)
 
@@ -210,8 +211,6 @@ buttons = [
     RSTICK_D,  # 270 (10E)
 ]
 
-default_key_mappings = "./default_mappings.ini"
-
 
 # data = json.dumps(key_mappings)
 # with open('key_mappings.json', 'w') as f:
@@ -329,7 +328,7 @@ def decrypt_simplified_stick(stick):
 
 
 class Controller(threading.Thread):
-    def __init__(self, imLabel, record_mode=False):
+    def __init__(self, mapping: mapping, imLabel, record_mode=False):
         threading.Thread.__init__(self)
         self.threadID = "Controller"
         self.record_mode = record_mode
@@ -339,57 +338,10 @@ class Controller(threading.Thread):
         self.last_cmd = ""
         self.isrunning = True
         self.current_pressed_key = set()
-        self.controller_keyboard = {
-            "BTN_Y": NONE,
-            "BTN_B": NONE,
-            "BTN_A": NONE,
-            "BTN_X": NONE,
-            "BTN_L": NONE,
-            "BTN_R": NONE,
-            "BTN_ZL": NONE,
-            "BTN_ZR": NONE,
-            "BTN_MINUS": NONE,
-            "BTN_PLUS": NONE,
-            "BTN_LCLICK": NONE,
-            "BTN_RCLICK": NONE,
-            "BTN_HOME": NONE,
-            "BTN_CAPTURE": NONE,
-            "DPAD_U": NONE,
-            "DPAD_R": NONE,
-            "DPAD_D": NONE,
-            "DPAD_L": NONE,
-            "LSTICK_R": NONE,  # 0 (000)
-            "LSTICK_U": NONE,  # 90 (05A)
-            "LSTICK_L": NONE,  # 180 (0B4)
-            "LSTICK_D": NONE,  # 270 (10E)
-            "RSTICK_R": NONE,  # 0 (000)
-            "RSTICK_U": NONE,  # 90 (05A)
-            "RSTICK_L": NONE,  # 180 ()# 180 (0B4)
-            "RSTICK_D": NONE,
-        }
-        self.read_key_mappings(default_key_mappings)
-        self.keyboard_controller = {v: k for k, v in self.controller_keyboard.items()}
         self.drawer = draw_controller(imLabel, controller=self)
         self.drawer.name = "Draw Button pressing"
+        self.mapping = mapping
         # self.drawer.start()
-
-    def read_key_mappings(self, inipath):
-        with open(inipath, "r") as f:
-            # self.key_mappings = {}
-            for line in f:
-                target_button = line.split(" ")[0]
-                user_key = line.split(" ")[-1][:-1]
-                if user_key != "NONE":
-                    self.controller_keyboard[target_button] = user_key
-
-        self.keyboard_controller = {v: k for k, v in self.controller_keyboard.items()}
-        # return key_mappings
-
-    def save_mapping_ini(self, filename):
-        path = os.path.join("mapping", filename)
-        with open(path, "w+") as f:
-            for k, v in self.controller_keyboard.items():
-                f.write("{} {}\n".format(v, k))
 
     def set_keyboard_listener(self):
         print("running")
@@ -408,8 +360,8 @@ class Controller(threading.Thread):
             key_ = key.char
         except AttributeError:
             key_ = key.name
-        if key_ in self.controller_keyboard.values():
-            self.current_pressed_key.add(self.keyboard_controller[key_])
+        if key_ in self.mapping.controller_keyboard.values():
+            self.current_pressed_key.add(self.mapping.keyboard_controller[key_])
             cur_cmd = cmd_to_packet(self.current2cmd())
             if self.last_cmd != cur_cmd and self.record_mode:
 
@@ -436,8 +388,8 @@ class Controller(threading.Thread):
             key_ = key.char
         except AttributeError:
             key_ = key.name
-        if key_ in self.controller_keyboard.values():
-            self.current_pressed_key.remove(self.keyboard_controller[key_])
+        if key_ in self.mapping.controller_keyboard.values():
+            self.current_pressed_key.remove(self.mapping.keyboard_controller[key_])
             cur_cmd = cmd_to_packet(self.current2cmd())
             if self.last_cmd != cur_cmd and self.record_mode:
 
