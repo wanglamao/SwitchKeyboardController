@@ -362,25 +362,25 @@ class Controller(threading.Thread):
             key_ = key.name
         if key_ in self.mapping.controller_keyboard.values():
             self.current_pressed_key.add(self.mapping.keyboard_controller[key_])
-            cur_cmd = cmd_to_packet(self.current2cmd())
-            if self.last_cmd != cur_cmd and self.record_mode:
+            # cur_cmd = cmd_to_packet(self.current2cmd())
+            # if self.last_cmd != cur_cmd and self.record_mode:
 
-                f = open("operation_list.txt", "a+")
-                now = time.time()
-                duration = now - self.last_time
-                self.last_time = now
-                cur_operation = {"cmd": self.last_cmd, "duration": duration}
-                self.operation_list.append(cur_operation)
-                self.last_cmd = cur_cmd
-                f.write(
-                    "'cmd':"
-                    + cur_operation["cmd"]
-                    + ", 'duration':"
-                    + str(cur_operation["duration"])
-                    + "\n"
-                )
-                print(cur_operation)
-                f.close()
+            #     f = open("operation_list.txt", "a+")
+            #     now = time.time()
+            #     duration = now - self.last_time
+            #     self.last_time = now
+            #     cur_operation = {"cmd": self.last_cmd, "duration": duration}
+            #     self.operation_list.append(cur_operation)
+            #     self.last_cmd = cur_cmd
+            #     f.write(
+            #         "'cmd':"
+            #         + cur_operation["cmd"]
+            #         + ", 'duration':"
+            #         + str(cur_operation["duration"])
+            #         + "\n"
+            #     )
+            #     print(cur_operation)
+            #     f.close()
 
     def on_release(self, key):
 
@@ -390,25 +390,25 @@ class Controller(threading.Thread):
             key_ = key.name
         if key_ in self.mapping.controller_keyboard.values():
             self.current_pressed_key.remove(self.mapping.keyboard_controller[key_])
-            cur_cmd = cmd_to_packet(self.current2cmd())
-            if self.last_cmd != cur_cmd and self.record_mode:
+            # cur_cmd = cmd_to_packet(self.current2cmd())
+            # if self.last_cmd != cur_cmd and self.record_mode:
 
-                f = open("operation_list.txt", "a+")
-                now = time.time()
-                duration = now - self.last_time
-                self.last_time = now
-                cur_operation = {"cmd": self.last_cmd, "duration": duration}
-                self.operation_list.append(cur_operation)
-                self.last_cmd = cur_cmd
-                f.write(
-                    "'cmd':"
-                    + cur_operation["cmd"]
-                    + ", 'duration':"
-                    + str(cur_operation["duration"])
-                    + "\n"
-                )
-                print(cur_operation)
-                f.close()
+            #     f = open("operation_list.txt", "a+")
+            #     now = time.time()
+            #     duration = now - self.last_time
+            #     self.last_time = now
+            #     cur_operation = {"cmd": self.last_cmd, "duration": duration}
+            #     self.operation_list.append(cur_operation)
+            #     self.last_cmd = cur_cmd
+            #     f.write(
+            #         "'cmd':"
+            #         + cur_operation["cmd"]
+            #         + ", 'duration':"
+            #         + str(cur_operation["duration"])
+            #         + "\n"
+            #     )
+            #     print(cur_operation)
+            #     f.close()
         if key == keyboard.Key.esc:
             return False
 
@@ -418,22 +418,6 @@ class Controller(threading.Thread):
         # sticks = [[], []]
         for key_ in self.current_pressed_key:
             cmd += button_str_var_mapping[key_]
-            # if "STICK" not in button_str:
-            #     cmd += button_str_var_mapping[button_str]
-            # elif "RSTICK" in button_str:
-            #     sticks[1].append(button_str)
-            # else:
-            #     sticks[0].append(button_str)
-
-        # for stick in sticks:
-        #     if len(stick) == 0:
-        #         continue
-        #     elif len(stick) == 1:
-        #         cmd += button_str_var_mapping[stick[0]]
-        #     else:
-        #         a = [button_str_var_mapping[button] for button in stick]
-        #         a = int(sum(a) / len(a))
-        #         cmd += a
         return cmd
 
     def set_record_mode(self, record_mode):
@@ -452,7 +436,7 @@ class Controller(threading.Thread):
 
         self.listener.stop()
         self.drawer.isrunning = False
-        print("exit")
+        print("pad exit")
 
 
 class draw_controller(threading.Thread):
@@ -501,16 +485,7 @@ class draw_controller(threading.Thread):
     def run(self):
         print("drawer running")
         while self.isrunning:
-            # time.sleep(1)
-            # print("haha")
-            # self.imLabel.configure(image=self.nothing_pressed)
-            # self.imLabel.image = self.nothing_pressed
-            # print("haha")
-            # time.sleep(1)
-            # self.imLabel.configure(image=self.X_pressed)
-            # self.imLabel.image = self.X_pressed
             img = self.compose_pressed_controller(self.get_pressed_keys_in_list())
-
             self.imLabel.configure(image=img)
             self.imLabel.image = img
         print("drawer exited")

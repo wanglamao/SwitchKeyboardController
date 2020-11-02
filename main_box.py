@@ -1,12 +1,13 @@
 from time import sleep
 from tkinter import Frame, Button, Label, Toplevel
-from pynput import keyboard
-from tkinter import IntVar
+from tkinter.ttk import Combobox
+from tkinter.constants import LEFT
 from controller_util import Controller, button_str_var_mapping
 from PIL import Image, ImageTk
 import numpy as np
 from NameChangeableButton import KeyMappingButton
 from mapping import mapping
+from glob import glob
 
 
 def duplicates(lst, item):
@@ -90,12 +91,12 @@ class Application(Frame):
         texts = [button["text"] for button in buttons]
         a = [duplicates(texts, x) for x in set(texts) if texts.count(x) > 1]
         if len(a) == 1:
-            if buttons[a[0][0]]["text"] != "none":
+            if buttons[a[0][0]]["text"] != "NONE":
                 for ind in a[0]:
                     buttons[ind].configure(bg="red")
         else:
             for dup_ind_pair in a:
-                if buttons[dup_ind_pair[0]]["text"] == "none":
+                if buttons[dup_ind_pair[0]]["text"] == "NONE":
                     continue
                 for ind in dup_ind_pair:
                     buttons[ind].configure(bg="red")
@@ -109,26 +110,95 @@ class Application(Frame):
         }
         win.destroy()
 
+    def check_duplicate_button(self, keys):
+        a = [duplicates(keys, x) for x in set(keys) if keys.count(x) > 1]
+        if len(a) == 1:
+            if self.buttons[a[0][0]]["text"] != "NONE":
+                for ind in a[0]:
+                    self.buttons[ind].configure(bg="red")
+        else:
+            for dup_ind_pair in a:
+                if self.buttons[dup_ind_pair[0]]["text"] == "NONE":
+                    continue
+                for ind in dup_ind_pair:
+                    self.buttons[ind].configure(bg="red")
+
+    def reset_button_text(self, keys):
+        for button in self.buttons:
+            button.configure(bg="SystemButtonFace")
+        # texts = [button["text"] for button in buttons]
+
+        for index, button in enumerate(self.buttons):
+            button.configure(text=keys[index])
+
+    def loadprofile(self):
+        path = self.combox.get()
+        path = "configs/" + path + ".ini"
+        self.mapping.read_key_mappings(path)
+        keys = list(self.mapping.controller_keyboard.values())
+        self.reset_button_text(keys)
+
+    def saveprofile(self):
+        ini_name = self.combox.get()
+        keys = [self.buttons[i]["text"] for i in range(26)]
+        self.check_duplicate_button(keys)
+        msg = ""
+        for i, item in enumerate(self.mapping.controller_keyboard.items()):
+            msg = msg + "{}    {}\n".format(item[0], keys[i])
+        with open("configs/" + ini_name + ".ini", "w") as f:
+            f.writelines(msg)
+
     def change_settings(self):
-        # if self.isOn:
-        #     self.play()
         win = Toplevel()
         win.lift()
         win.focus_force()
         win.grab_set()
         win.grab_release()
+        dropdown_frame = Frame(win)
+        dropdown_frame.pack()
         button_frame = Frame(win)
-        button_frame.pack()
+        button_frame.pack(pady=20)
         setting_frame = Frame(win)
-        setting_frame.pack()
+        setting_frame.pack(pady=20)
         self.buttons = [None] * 26
         rows = 13
+
+        self.combox = Combobox(dropdown_frame)
+        self.combox.pack(side=LEFT)
+        inis = glob("configs/*.ini")
+        inis = [ini.split(".")[0].split("\\")[-1] for ini in inis]
+        self.combox["values"] = inis
+
+        self.loadbutton = Button(
+            dropdown_frame,
+            text="load",
+            width=self.buttonwidth,
+            command=self.loadprofile,
+        )
+        self.loadbutton.pack(side=LEFT)
+
+        self.savebutton = Button(
+            dropdown_frame,
+            text="save",
+            width=self.buttonwidth,
+            command=self.saveprofile,
+        )
+        self.savebutton.pack(side=LEFT)
         for index, items in enumerate(self.mapping.controller_keyboard.items()):
             Label(button_frame, text=items[0], width=self.buttonwidth).grid(
                 row=index % rows, column=int(index / rows) * 2
             )
             a = KeyMappingButton(button_frame, text=items[1], width=self.buttonwidth)
-            a.grid(row=index % rows, column=int(index / rows) * 2 + 1)
+            if index >= 13:
+                a.grid(
+                    row=index % rows,
+                    column=int(index / rows) * 2 + 1,
+                    padx=25,
+                    sticky="w",
+                )
+            else:
+                a.grid(row=index % rows, column=int(index / rows) * 2 + 1)
+
             self.buttons[index] = a
 
         confirm_button = Button(
@@ -137,18 +207,21 @@ class Application(Frame):
             width=self.buttonwidth,
             command=lambda: self.confirm_setting(win, self.buttons),
         )
-        confirm_button.grid(row=13, column=1)
+        confirm_button.pack(side=LEFT)
+        # save_button = Button(
+        #     setting_frame,
+        #     text="save",
+        #     width=self.buttonwidth,
+        #     command=self.save_profile,
+        # )
+        # save_button.pack(side=LEFT, padx=10)
         win.wm_title("Window")
 
-    # def draw_button_pressings(self, imLabel):
-    #     self.drawer = draw_controller(imLabel, self.pad)
-    #     self.drawer.name = "Draw Button pressing"
-    #     self.drawer.start()
+    def save_profile(self):
+        pass
 
     def on_closing(self):
-        # self.drawer.isrunning = False
         self.stop()
-        # sleep(2)
         self.master.quit()
         self.master.destroy()
         exit(0)

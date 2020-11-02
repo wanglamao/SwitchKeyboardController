@@ -3,7 +3,7 @@ import os
 
 class mapping:
     def __init__(self, controller_keyboard=None):
-        self.default_key_mappings = "./default_mappings.ini"
+        self.default_key_mappings = "configs/default_mappings.ini"
         if controller_keyboard is None:
             self.controller_keyboard = {
                 "BTN_Y": None,
@@ -36,7 +36,9 @@ class mapping:
             self.read_key_mappings(self.default_key_mappings)
         else:
             self.controller_keyboard = controller_keyboard
-        self.keyboard_controller = {v: k for k, v in self.controller_keyboard.items()}
+            self.keyboard_controller = {
+                v: k for k, v in self.controller_keyboard.items()
+            }
         pass
 
     def read_key_mappings(self, inipath):

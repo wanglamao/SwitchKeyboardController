@@ -17,7 +17,7 @@ class KeyMappingButton(Button):
                 okVar.set(1)
                 return
             if newkey == "f1":
-                self.configure(text="none")
+                self.configure(text="NONE")
                 okVar.set(1)
                 return
             self.configure(text=newkey)
