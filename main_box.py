@@ -2,7 +2,7 @@ from time import sleep
 from tkinter import Frame, Button, Label, Toplevel
 from tkinter.ttk import Combobox
 from tkinter.constants import LEFT
-from controller_util import Controller, button_str_var_mapping
+from controller_util import Controller
 from PIL import Image, ImageTk
 import numpy as np
 from NameChangeableButton import KeyMappingButton
@@ -208,13 +208,6 @@ class Application(Frame):
             command=lambda: self.confirm_setting(win, self.buttons),
         )
         confirm_button.pack(side=LEFT)
-        # save_button = Button(
-        #     setting_frame,
-        #     text="save",
-        #     width=self.buttonwidth,
-        #     command=self.save_profile,
-        # )
-        # save_button.pack(side=LEFT, padx=10)
         win.wm_title("Window")
 
     def save_profile(self):
