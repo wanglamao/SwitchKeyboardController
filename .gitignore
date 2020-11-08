@@ -15,3 +15,5 @@ dist
 *.spec
 *.ipynb
 *.exe
+Arduino32
+test.py

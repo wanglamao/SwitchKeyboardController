@@ -9,8 +9,99 @@ import time
 import threading
 from mapping import mapping
 from pygame.time import Clock
-from codec import *
 
+# keyboard.KeyCode(13)
+
+A_DPAD_CENTER = 0x08
+A_DPAD_U = 0x00
+A_DPAD_U_R = 0x01
+A_DPAD_R = 0x02
+A_DPAD_D_R = 0x03
+A_DPAD_D = 0x04
+A_DPAD_D_L = 0x05
+A_DPAD_L = 0x06
+A_DPAD_U_L = 0x07
+
+# Enum DIR Values
+DIR_CENTER = 0x00
+DIR_U = 0x01
+DIR_R = 0x02
+DIR_D = 0x04
+DIR_L = 0x08
+DIR_U_R = DIR_U + DIR_R
+DIR_D_R = DIR_D + DIR_R
+DIR_U_L = DIR_U + DIR_L
+DIR_D_L = DIR_D + DIR_L
+
+BTN_NONE = 0x0000000000000000
+BTN_Y = 0x0000000000000001
+BTN_B = 0x0000000000000002
+BTN_A = 0x0000000000000004
+BTN_X = 0x0000000000000008
+BTN_L = 0x0000000000000010
+BTN_R = 0x0000000000000020
+BTN_ZL = 0x0000000000000040
+BTN_ZR = 0x0000000000000080
+BTN_MINUS = 0x0000000000000100
+BTN_PLUS = 0x0000000000000200
+BTN_LCLICK = 0x0000000000000400
+BTN_RCLICK = 0x0000000000000800
+BTN_HOME = 0x0000000000001000
+BTN_CAPTURE = 0x0000000000002000
+
+DPAD_CENTER = 0x0000000000000000
+DPAD_U = 0x0000000000010000
+DPAD_R = 0x0000000000020000
+DPAD_D = 0x0000000000040000
+DPAD_L = 0x0000000000080000
+DPAD_U_R = DPAD_U + DPAD_R
+DPAD_D_R = DPAD_D + DPAD_R
+DPAD_U_L = DPAD_U + DPAD_L
+DPAD_D_L = DPAD_D + DPAD_L
+
+
+LSTICK_CENTER = 0x0000000000000000
+LSTICK_U = 0x0000000001000000  # 0 (000)
+LSTICK_R = 0x0000000002000000  # 90 (05A)
+LSTICK_D = 0x0000000004000000  # 180 (0B4)
+LSTICK_L = 0x0000000008000000  # 270 (10E)
+LSTICK_U_L = LSTICK_U + LSTICK_L  # 135 (087)
+LSTICK_U_R = LSTICK_U + LSTICK_R  # 45 (02D)
+LSTICK_D_L = LSTICK_D + LSTICK_L  # 225 (0E1)
+LSTICK_D_R = LSTICK_D + LSTICK_R  # 315 (13B)
+
+RSTICK_CENTER = 0x0000000000000000
+RSTICK_U = 0x0000000100000000  # 0 (000)
+RSTICK_R = 0x0000000200000000  # 90 (05A)
+RSTICK_D = 0x0000000400000000  # 180 (0B4)
+RSTICK_L = 0x0000000800000000  # 270 (10E)
+RSTICK_U_L = RSTICK_U + RSTICK_L  # 135 (087)
+RSTICK_U_R = RSTICK_U + RSTICK_R  # 45 (02D)
+RSTICK_D_L = RSTICK_D + RSTICK_L  # 225 (0E1)
+RSTICK_D_R = RSTICK_D + RSTICK_R  # 315 (13B)
+
+"""
+LSTICK_CENTER = 0x0000000000000000
+LSTICK_R = 0x00000000FF000000  # 0 (000)
+LSTICK_U_R = 0x0000002DFF000000  # 45 (02D)
+LSTICK_U = 0x0000005AFF000000  # 90 (05A)
+LSTICK_U_L = 0x00000087FF000000  # 135 (087)
+LSTICK_L = 0x000000B4FF000000  # 180 (0B4)
+LSTICK_D_L = 0x000000E1FF000000  # 225 (0E1)
+LSTICK_D = 0x0000010EFF000000  # 270 (10E)
+LSTICK_D_R = 0x0000013BFF000000  # 315 (13B)
+
+RSTICK_CENTER = 0x0000000000000000
+RSTICK_R = 0x000FF00000000000  # 0 (000)
+RSTICK_U_R = 0x02DFF00000000000  # 45 (02D)
+RSTICK_U = 0x05AFF00000000000  # 90 (05A)
+RSTICK_U_L = 0x087FF00000000000  # 135 (087)
+RSTICK_L = 0x0B4FF00000000000  # 180 (0B4)
+RSTICK_D_L = 0x0E1FF00000000000  # 225 (0E1)
+RSTICK_D = 0x10EFF00000000000  # 270 (10E)
+RSTICK_D_R = 0x13BFF00000000000  # 315 (13B)
+"""
+NO_INPUT = BTN_NONE + DPAD_CENTER + LSTICK_CENTER + RSTICK_CENTER
 
 # key_mappings = {
 # "w": LSTICK_U,
@@ -33,17 +124,98 @@ from codec import *
 
 # binded_keys = set()
 
+button_str_var_mapping = {
+    "BTN_Y": BTN_Y,
+    "BTN_B": BTN_B,
+    "BTN_A": BTN_A,
+    "BTN_X": BTN_X,
+    "BTN_L": BTN_L,
+    "BTN_R": BTN_R,
+    "BTN_ZL": BTN_ZL,
+    "BTN_ZR": BTN_ZR,
+    "BTN_MINUS": BTN_MINUS,
+    "BTN_PLUS": BTN_PLUS,
+    "BTN_LCLICK": BTN_LCLICK,
+    "BTN_RCLICK": BTN_RCLICK,
+    "BTN_HOME": BTN_HOME,
+    "BTN_CAPTURE": BTN_CAPTURE,
+    "DPAD_U": DPAD_U,
+    "DPAD_R": DPAD_R,
+    "DPAD_D": DPAD_D,
+    "DPAD_L": DPAD_L,
+    "LSTICK_R": LSTICK_R,  # 0 (000)
+    "LSTICK_U": LSTICK_U,  # 90 (05A)
+    "LSTICK_L": LSTICK_L,  # 180 (0B4)
+    "LSTICK_D": LSTICK_D,  # 270 (10E)
+    "RSTICK_R": RSTICK_R,  # 0 (000)
+    "RSTICK_U": RSTICK_U,  # 90 (05A)
+    "RSTICK_L": RSTICK_L,  # 180 ()# 180 (0B4)
+    "RSTICK_D": RSTICK_D,
+}
+
+key_mappings = {
+    #     # BTN_Y:None,
+    #     # BTN_B:None,
+    #     # BTN_A:None,
+    #     # BTN_X:None,
+    #     # BTN_L:None,
+    #     # BTN_R:None,
+    #     # BTN_ZL:None,
+    #     # BTN_ZR:None,
+    #     # BTN_MINUS:None,
+    #     # BTN_PLUS:None,
+    #     # BTN_LCLICK:None,
+    #     # BTN_RCLICK:None,
+    #     # BTN_HOME:None,
+    #     # BTN_CAPTURE:None,
+    #     # DPAD_U:None,
+    #     # DPAD_R:None,
+    #     # DPAD_D:None,
+    #     # DPAD_L:None,
+    #     # LSTICK_R:None,  # 0 (000)
+    #     # LSTICK_U:None,  # 90 (05A)
+    #     # LSTICK_L:None,  # 180 (0B4)
+    #     # LSTICK_D:None,  # 270 (10E)
+    #     # RSTICK_R:None,  # 0 (000)
+    #     # RSTICK_U:None,  # 90 (05A)
+    #     # RSTICK_L:None,  # 180 (0B4)
+    #     # RSTICK_D:None,  # 270 (10E)
+}
+
+
+buttons = [
+    BTN_Y,
+    BTN_B,
+    BTN_A,
+    BTN_X,
+    BTN_L,
+    BTN_R,
+    BTN_ZL,
+    BTN_ZR,
+    BTN_MINUS,
+    BTN_PLUS,
+    BTN_LCLICK,
+    BTN_RCLICK,
+    BTN_HOME,
+    BTN_CAPTURE,
+    DPAD_U,
+    DPAD_R,
+    DPAD_D,
+    DPAD_L,
+    LSTICK_R,  # 0 (000)
+    LSTICK_U,  # 90 (05A)
+    LSTICK_L,  # 180 (0B4)
+    LSTICK_D,  # 270 (10E)
+    RSTICK_R,  # 0 (000)
+    RSTICK_U,  # 90 (05A)
+    RSTICK_L,  # 180 (0B4)
+    RSTICK_D,  # 270 (10E)
+]
+
 
 # data = json.dumps(key_mappings)
 # with open('key_mappings.json', 'w') as f:
 #     json.dump(data, f)
-
-
-def p_wait(waitTime):
-    t0 = time.perf_counter()
-    t1 = t0
-    while t1 - t0 < waitTime:
-        t1 = time.perf_counter()
 
 
 # Compute x and y based on angle and intensity
@@ -62,8 +234,6 @@ def rstick_angle(angle, intensity):
     return (intensity + (angle << 8)) << 44
 
 
-"""
-# my implementation
 def cmd_to_packet(command):
     cmdCopy = command
     low = cmdCopy & 0xFF
@@ -102,35 +272,6 @@ def cmd_to_packet(command):
         + str(right_y)
     )
     return msg
-"""
-
-
-def cmd_to_packet(command):
-    cmdCopy = command
-    low = cmdCopy & 0xFF
-    cmdCopy = cmdCopy >> 8
-    high = cmdCopy & 0xFF
-    cmdCopy = cmdCopy >> 8
-    dpad = cmdCopy & 0xFF
-    cmdCopy = cmdCopy >> 8
-    # lstick_intensity = cmdCopy & 0xFF
-    lstick = cmdCopy & 0xFF
-    cmdCopy = cmdCopy >> 8
-    # lstick_angle = cmdCopy & 0xFFF
-    # cmdCopy = cmdCopy >> 12
-    # rstick_intensity = cmdCopy & 0xFF
-    rstick = cmdCopy & 0xFF
-    # cmdCopy = cmdCopy >> 8
-    # rstick_angle = cmdCopy & 0xFFF
-    dpad = decrypt_dpad(dpad)
-    # left_x, left_y = angle(lstick_angle, lstick_intensity)
-    # right_x, right_y = angle(rstick_angle, rstick_intensity)
-    left_x, left_y = decrypt_simplified_stick(lstick)
-    right_x, right_y = decrypt_simplified_stick(rstick)
-
-    packet = [high, low, dpad, left_x, left_y, right_x, right_y, 0x00]
-    # print (hex(command), packet, lstick_angle, lstick_intensity, rstick_angle, rstick_intensity)
-    return packet
 
 
 # Convert DPAD value to actual DPAD value used by Switch
@@ -201,7 +342,6 @@ class Controller(threading.Thread):
         self.drawer = draw_controller(imLabel, controller=self)
         self.drawer.name = "Draw Button pressing"
         self.mapping = mapping
-        self.ser = None
         # self.drawer.start()
 
     def set_keyboard_listener(self):
@@ -273,120 +413,6 @@ class Controller(threading.Thread):
         if key == keyboard.Key.esc:
             return False
 
-    # Discard all incoming bytes and read the last (latest) (returns int)
-    def read_byte_latest(self):
-        inWaiting = self.ser.in_waiting
-        if inWaiting == 0:
-            inWaiting = 1
-        bytes_in = self.read_bytes(inWaiting)
-        if len(bytes_in) != 0:
-            byte_in = bytes_in[0]
-        else:
-            byte_in = 0
-        return byte_in
-
-    def wait_for_data(self, timeout=1.0, sleepTime=0.1):
-        t0 = time.perf_counter()
-        t1 = t0
-        inWaiting = self.ser.in_waiting
-        while (t1 - t0 < sleepTime) or (inWaiting == 0):
-            time.sleep(sleepTime)
-            inWaiting = self.ser.in_waiting
-            t1 = time.perf_counter()
-
-    def force_sync(self):
-        # Send 9x 0xFF's to fully flush out buffer on device
-        # Device will send back 0xFF (RESP_SYNC_START) when it is ready to sync
-        self.write_bytes([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
-
-        # Wait for serial data and read the last byte sent
-        self.wait_for_data()
-        byte_in = self.read_byte_latest()
-
-        # Begin sync...
-        inSync = False
-        if byte_in == RESP_SYNC_START:
-            self.write_byte(COMMAND_SYNC_1)
-            byte_in = self.read_byte()
-            if byte_in == RESP_SYNC_1:
-                self.write_byte(COMMAND_SYNC_2)
-                byte_in = self.read_byte()
-                if byte_in == RESP_SYNC_OK:
-                    inSync = True
-        return inSync
-
-    def send_cmd(self, command=NO_INPUT):
-        commandSuccess = self.send_packet(cmd_to_packet(command))
-        return commandSuccess
-
-    def sync(self):
-        inSync = False
-
-        # Try sending a packet
-        inSync = self.send_packet()
-        if not inSync:
-            # Not in sync: force resync and send a packet
-            inSync = self.force_sync()
-            if inSync:
-                inSync = self.send_packet()
-        return inSync
-
-    def crc8_ccitt(self, old_crc, new_data):
-        data = old_crc ^ new_data
-
-        for i in range(8):
-            if (data & 0x80) != 0:
-                data = data << 1
-                data = data ^ 0x07
-            else:
-                data = data << 1
-            data = data & 0xFF
-        return data
-
-    def write_bytes(self, bytes_out):
-        self.ser.write(bytearray(bytes_out))
-        return
-
-    # Write byte to the serial port
-    def write_byte(self, byte_out):
-        self.write_bytes([byte_out])
-        return
-
-    def read_bytes(self, size):
-        bytes_in = self.ser.read(size)
-        return list(bytes_in)
-
-    # Read 1 byte from the serial port (returns int)
-    def read_byte(self):
-        bytes_in = self.read_bytes(1)
-        if len(bytes_in) != 0:
-            byte_in = bytes_in[0]
-        else:
-            byte_in = 0
-        return byte_in
-
-    def send_packet(
-        self, packet=[0x00, 0x00, 0x08, 0x80, 0x80, 0x80, 0x80, 0x00], debug=False
-    ):
-        if not debug:
-            bytes_out = []
-            bytes_out.extend(packet)
-
-            # Compute CRC
-            crc = 0
-            for d in packet:
-                crc = self.crc8_ccitt(crc, d)
-            bytes_out.append(crc)
-            self.write_bytes(bytes_out)
-            # print(bytes_out)
-
-            # Wait for USB ACK or UPDATE NACK
-            byte_in = self.read_byte()
-            commandSuccess = byte_in == RESP_USB_ACK
-        else:
-            commandSuccess = True
-        return commandSuccess
-
     def current2cmd(self):
         global button_str_var_mapping
         cmd = 0
@@ -402,31 +428,14 @@ class Controller(threading.Thread):
         clock = Clock()
         self.set_keyboard_listener()
         self.drawer.start()
-        self.ser = serial.Serial("COM3", 19200, timeout=1)
-        if not self.sync():
-            print("Could not sync!")
-            self.ser.close()
-            return
-
-        if not self.send_cmd(BTN_A + DPAD_U_R + LSTICK_U + RSTICK_D_L):
-            print("Packet Error!")
-            self.ser.close()
-            return
-
-        p_wait(0.05)
-
-        if not self.send_cmd():
-            print("Packet Error!")
-            self.ser.close()
-            return
-
+        ser = serial.Serial("COM3", 19200)
         print("record mode: " + str(self.record_mode))
         while self.isrunning:
             clock.tick(120)
-            self.send_packet(cmd_to_packet(self.current2cmd()))
+            msg = cmd_to_packet(self.current2cmd())
             # print(msg)
-            # ser.write(f"{msg}\r\n".encode("utf-8"))
-        self.ser.close()
+            ser.write(f"{msg}\r\n".encode("utf-8"))
+
         self.listener.stop()
         self.drawer.isrunning = False
         print("pad exit")
